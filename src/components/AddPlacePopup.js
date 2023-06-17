@@ -1,30 +1,33 @@
-import { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import PopupWithForm from "./PopupWithForm";
+import useForm from "../hooks/useForm";
 
-function AddPlacePopup({
-  isOpen,
-  onClose,
-  onAddPlace,
-  isLoading,
-  buttonState,
-  onValidate,
-  errorMessage,
-}) {
-  const [cardName, setCardName] = useState("");
-  const [cardLink, setCardLink] = useState("");
-
-  useEffect(() => {
-    setCardName("");
-    setCardLink("");
-  }, [isOpen]);
+function AddPlacePopup(props) {
+  const {isOpen, onClose, onAddPlace, isLoading, buttonState, onValidate, errorMessage} = props;  
+  const { values,  handleChange, resetForm } = useForm({name: '', link: ''});
 
   function handleSubmit(evt) {
     evt.preventDefault();
     onAddPlace({
-      name: cardName,
-      link: cardLink,
+      name: values.name,
+      link: values.link
     });
   }
+
+  useEffect(() => {
+    if (!isOpen){
+      resetForm();
+    }
+}, [isOpen, resetForm])
+ 
+/* 
+  const [cardName, setCardName] = useState("");
+  const [cardLink, setCardLink] = useState(""); */
+
+/*   useEffect(() => {
+    setCardName("");
+    setCardLink("");
+  }, [isOpen]);
 
   function hundleChangeCardName(evt) {
     setCardName(evt.target.value);
@@ -32,7 +35,8 @@ function AddPlacePopup({
 
   function hundleChangeCardLink(evt) {
     setCardLink(evt.target.value);
-  }
+  } */
+
 
   return (
     <PopupWithForm
@@ -52,8 +56,8 @@ function AddPlacePopup({
           type="text"
           name="name"
           placeholder="Название места"
-          value={cardName || ""}
-          onChange={hundleChangeCardName}
+          value={values.name || ''}
+          onChange={handleChange}
           minLength="2"
           maxLength="30"
           required
@@ -70,8 +74,8 @@ function AddPlacePopup({
           type="url"
           name="link"
           placeholder="Ссылка на изображение"
-          value={cardLink || ""}
-          onChange={hundleChangeCardLink}
+          value={values.link || ''}
+          onChange={handleChange}
           required
         />
         <span className="popup__input-error input-url-error">

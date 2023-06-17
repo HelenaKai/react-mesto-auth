@@ -1,40 +1,54 @@
-import React, { useEffect, useState } from "react";
-import { Route, Routes, Navigate, useNavigate } from "react-router-dom";
-import ProtectedRoute from "./ProtectedRoute";
+import React, { useEffect, useState } from 'react';
+import { Route, Routes, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import ProtectedRoute from './ProtectedRoute';
 
-import Header from "./Header";
-import Main from "./Main";
-import Footer from "./Footer";
-import ImagePopup from "./ImagePopup";
-import EditProfilePopup from "./EditProfilePopup";
-import EditAvatarPopup from "./EditAvatarPopup";
-import AddPlacePopup from "./AddPlacePopup";
-import ConfirmDeletePopup from "./ConfirmDeletePopup";
+import Header from './Header';
+import Main from './Main';
+import Footer from './Footer';
+import ImagePopup from './ImagePopup';
+import EditProfilePopup from './EditProfilePopup';
+import EditAvatarPopup from './EditAvatarPopup';
+import AddPlacePopup from './AddPlacePopup';
+import ConfirmDeletePopup from './ConfirmDeletePopup';
 
-import Login from "./Login";
-import Register from "./Register";
-import InfoTooltip from "./InfoTooltip";
+import Login from './Login';
+import Register from './Register';
+import InfoTooltip from './InfoTooltip';
 
-import api from "../utils/Api";
-import * as auth from "../utils/auth";
+import api from '../utils/Api';
+import * as auth from '../utils/auth';
+/* import {checkToken, login, register} from '../utils/auth'; */
 
-import { CurrentUserContext } from "../contexts/CurrentUserContext";
+import { CurrentUserContext } from '../contexts/CurrentUserContext';
+
 
 function App() {
-  const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false); // попап редактирования
-  const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = useState(false); // попап добавления место
-  const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false); // попап аватара
+  const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);      // попап редактирования
+  const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = useState(false);            // попап добавления место
+  const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);        // попап аватара
   const [isImagePopupOpen, setImagePopupOpen] = useState(false);
-  const [isConfirmDeletePopupOpen, setIsConfirmDeletePopupOpen] =
-    useState(false);
+  const [isConfirmDeletePopupOpen, setIsConfirmDeletePopupOpen] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
-
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [isInfoTooltipPopup, setIsInfoTooltipPopup] = useState(false);
   const [regSuccess, setRegSuccess] = useState(false);
 
-  const [userEmail, setUserEmail] = useState("");
+  const [userEmail, setUserEmail] = useState('');
+  const [userPwd, setUserPwd] = useState('');
+
+
+  //задание текста кнопки header'а 
+  const [headerBtnText, setHeaderBtnText] = useState('Регистрация');
+
+  //задание текста кнопки сохранения
+  const [submitBtnText, setSubmitBtnText] = useState('Войти');
+
+  //функция для изменения текста кнопки при отправке данных
+  function changeSubmitBtnText(text) {
+    setSubmitBtnText(text);
+  };
 
   //Переменная состояния для карточек
   const [cards, setCards] = useState([]);
@@ -52,8 +66,9 @@ function App() {
     isAddPlacePopupOpen ||
     isEditAvatarPopupOpen ||
     isImagePopupOpen ||
-    isConfirmDeletePopupOpen ||
+    isConfirmDeletePopupOpen  ||
     isInfoTooltipPopup;
+   
 
   // --------закрытие по ESC и оверлею
   useEffect(() => {
@@ -78,18 +93,22 @@ function App() {
     }
   }, [handlePopupElement]);
 
+
+
   //---------------------------------------------------------
-  useEffect(() => {
-    loggedIn &&
-      Promise.all([api.getUserInfo(), api.getInitialCards()])
-        .then(([userInfo, initialCards]) => {
-          setCurrentUser(userInfo);
-          setCards(initialCards);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-  }, [loggedIn]);
+ useEffect(() => {
+  loggedIn && 
+    Promise.all([api.getUserInfo(), api.getInitialCards()])
+      .then(([userInfo, initialCards]) => {
+        setCurrentUser(userInfo);
+        setCards(initialCards);
+      })
+      .catch((err) => {
+        console.log(err);
+       /*  handleInfoTooltip(false);  */
+      });
+  }, [loggedIn]);  
+
 
   const handleEditProfileClick = () => setIsEditProfilePopupOpen(true);
   const handleAddPlaceClick = () => setIsAddPlacePopupOpen(true);
@@ -116,8 +135,9 @@ function App() {
     setIsInfoTooltipPopup(false);
   };
 
-  //----------------------------------------------------------------------------
-  //функция отправки жетона для аутентификации
+
+//----------------------------------------------------------------------------
+//функция отправки жетона для аутентификации
 
   function checkToken() {
     const token = localStorage.getItem("jwt");
@@ -127,68 +147,74 @@ function App() {
         .then((res) => {
           if (res && res.data) {
             setLoggedIn(true);
-            setUserEmail(res.data.email);
+            setUserEmail(res.data.emaill);
             navigate("/");
           }
         })
         .catch((err) => {
-          console.log("Внутренняя ошибка: ", err);
+          console.log('Внутренняя ошибка: ', err);
           setLoggedIn(false);
+          /*  handleInfoTooltip(false); */
         });
     }
   }
   useEffect(() => {
     checkToken();
 
-    // eslint-disable-next-line
+   // eslint-disable-next-line 
   }, []);
 
-  //функция отправки данных для авторизации и обработки ответа
 
-  function handleLogin(loginData) {
+   //функция отправки данных для авторизации и обработки ответа
+
+   function handleLogin(loginData) {
     auth
       .login(loginData)
       .then((res) => {
-        if (res && res.token) {
-          localStorage.setItem("jwt", res.token);
-          setUserEmail(loginData.email);
-          setLoggedIn(true);
-          navigate("/");
-        }
+        localStorage.setItem('jwt', res.token);
+        setUserEmail(loginData.email);
+        setLoggedIn(true);
+        navigate("/");
       })
       .catch((err) => {
-        console.log("Внутренняя ошибка: ", err);
-        setLoggedIn(false);
-        setIsInfoTooltipPopup(true);
+        console.log('Внутренняя ошибка: ', err);  
+        setIsInfoTooltipPopup(true);    
+        /* handleInfoTooltip(); */
       });
-  }
+  };
+ 
+
+
 
   //функция отправки данных на регистрацию и обработки ответа
 
-  function handleRegister(regData) {
-    auth
-      .register(regData)
-      .then((res) => {
-        if (res && res.data) {
-          navigate("/sign-in");
-          setRegSuccess(true);
-          setIsInfoTooltipPopup(true);
-        }
+  function handleRegister(email, password) {
+    auth.register(email, password)
+      .then(() => {
+        setRegSuccess(true);
+        setIsInfoTooltipPopup(true);
+        setUserEmail(email);
+        setUserPwd(password);
+        navigate('/sign-in')
       })
-      .catch((err) => {
+      .catch(err => {
         setRegSuccess(false);
         setIsInfoTooltipPopup(true);
-        console.log("Внутренняя ошибка: ", err);
-      });
-  }
+        console.log('Внутренняя ошибка: ', err);
+      })
+  };
 
-  //функция обработки выхода с сайта
-  function logOut() {
-    setLoggedIn(false);
-    localStorage.removeItem("jwt");
 
-    setUserEmail("");
-  }
+ //функция обработки выхода с сайта
+ function logOut() {
+  localStorage.removeItem('jwt');
+  setSubmitBtnText('Войти');
+  setUserEmail('');
+  setUserPwd('');
+  setLoggedIn(false);
+  navigate("/sign-in");
+};
+
 
   // Api------- Изменение данных пользователя
   const handleUpdateUser = (data) => {
@@ -201,6 +227,7 @@ function App() {
       })
       .catch((err) => {
         console.log(err);
+       /*  handleInfoTooltip(false); */
       })
       .finally(() => setIsLoading(false));
   };
@@ -216,6 +243,7 @@ function App() {
       })
       .catch((err) => {
         console.log(err);
+      /*   handleInfoTooltip(false); */
       })
       .finally(() => setIsLoading(false));
   };
@@ -233,6 +261,7 @@ function App() {
       })
       .catch((error) => {
         console.log(error);
+      /*   handleInfoTooltip(false); */
       });
   }
 
@@ -250,6 +279,7 @@ function App() {
       })
       .catch((err) => {
         console.log(err);
+      /*   handleInfoTooltip(false); */
       })
       .finally(() => setIsLoading(false));
   };
@@ -265,9 +295,11 @@ function App() {
       })
       .catch((err) => {
         console.log(err);
+      /*   handleInfoTooltip(false); */
       })
       .finally(() => setIsLoading(false));
   };
+
 
   function checkInputValidity(evt) {
     if (!evt.currentTarget.checkValidity()) {
@@ -287,19 +319,32 @@ function App() {
     setButtonState(true);
   }, [isEditProfilePopupOpen, isAddPlacePopupOpen, isEditAvatarPopupOpen]);
 
+//-------------------------------------------------------------------------------
+
+//функция переключения страницы
+function handleTogglePage() {
+  if (location.pathname === '/sign-in') {
+    navigate('/sign-up')
+    setHeaderBtnText('Вход')
+    return;
+  }
+  navigate('/sign-in')
+  setHeaderBtnText('Регистрация')
+};
+
+
   return (
     <CurrentUserContext.Provider value={currentUser}>
       <div className="page">
-        <Header loggedIn={loggedIn} userEmail={userEmail} logOut={logOut} />
+        <Header 
+            loggedIn={loggedIn} 
+            userEmail={userEmail} 
+            btnText={headerBtnText}
+            onTogglePage={handleTogglePage}
+            logOut={logOut} 
+        />
 
         <Routes>
-          <Route path="/sign-in" element={<Login onLogin={handleLogin} />} />
-
-          <Route
-            path="/sign-up"
-            element={<Register onRegister={handleRegister} />}
-          />
-
           <Route
             path="/"
             element={
@@ -317,7 +362,35 @@ function App() {
             }
           />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            path="/sign-up"
+            element={
+              <Register 
+                onRegister={handleRegister} 
+                btnText='Зарегистрироваться'
+                onTogglePage={handleTogglePage}
+                
+              />
+            }
+          />
+
+          <Route 
+            path="/sign-in" 
+            element={
+              <Login 
+                onLogin={handleLogin}
+                email={userEmail}
+                password={userPwd} 
+                btnText={submitBtnText}
+                changeBtnText={changeSubmitBtnText}
+              />
+            } 
+          />
+
+          <Route path="*" element={
+            <Navigate to='/' replace />}
+          />
+
         </Routes>
 
         <Footer date={new Date().getFullYear()} loggedIn={loggedIn} />
@@ -376,3 +449,4 @@ function App() {
 }
 
 export default App;
+
